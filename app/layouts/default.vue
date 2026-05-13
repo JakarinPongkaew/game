@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
-import { LogOut, LayoutDashboard, Users, History, Sword } from 'lucide-vue-next'
+import { LogOut, LayoutDashboard, Users, History, Sword, Settings, ChevronRight } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 
@@ -15,37 +15,50 @@ const handleLogout = () => {
 
 <template>
   <div class="app-layout">
-    <nav v-if="auth.isAuthenticated" class="sidebar glass-card">
-      <div class="logo">
-        <Sword :size="24" class="accent" />
-        <span>GANG SYSTEM</span>
+    <aside v-if="auth.isAuthenticated" class="sidebar glass-card">
+      <div class="sidebar-header">
+        <div class="logo-wrapper">
+          <Sword :size="28" class="logo-icon" />
+          <div class="logo-text">
+            <span class="title">GANG SYSTEM</span>
+            <span class="version">VERSION 2.0</span>
+          </div>
+        </div>
       </div>
       
-      <div class="nav-links">
-        <NuxtLink to="/" class="nav-item" active-class="active">
-          <LayoutDashboard :size="20" />
-          <span>เช็คชื่อ</span>
+      <nav class="nav-menu">
+        <NuxtLink to="/" class="nav-link" active-class="active">
+          <div class="icon-box"><LayoutDashboard :size="20" /></div>
+          <span class="label">เช็คชื่อ</span>
+          <ChevronRight class="arrow" :size="16" />
         </NuxtLink>
-        <NuxtLink to="/members" class="nav-item" active-class="active">
-          <Users :size="20" />
-          <span>จัดการสมาชิก</span>
+        <NuxtLink to="/members" class="nav-link" active-class="active">
+          <div class="icon-box"><Users :size="20" /></div>
+          <span class="label">จัดการสมาชิก</span>
+          <ChevronRight class="arrow" :size="16" />
         </NuxtLink>
-        <NuxtLink to="/history" class="nav-item" active-class="active">
-          <History :size="20" />
-          <span>ประวัติ</span>
+        <NuxtLink to="/history" class="nav-link" active-class="active">
+          <div class="icon-box"><History :size="20" /></div>
+          <span class="label">ประวัติการทำงาน</span>
+          <ChevronRight class="arrow" :size="16" />
         </NuxtLink>
-      </div>
+      </nav>
 
-      <div class="user-info">
-        <div class="details">
-          <p class="username">{{ auth.user?.username }}</p>
-          <p class="role">{{ auth.user?.role }}</p>
+      <div class="sidebar-footer">
+        <div class="user-card glass-card">
+          <div class="avatar-box">
+            {{ auth.user?.username.charAt(0).toUpperCase() }}
+          </div>
+          <div class="user-info">
+            <p class="name">{{ auth.user?.username }}</p>
+            <p class="role-badge">{{ auth.user?.role }}</p>
+          </div>
+          <button @click="handleLogout" class="logout-btn" title="ออกจากระบบ">
+            <LogOut :size="18" />
+          </button>
         </div>
-        <button @click="handleLogout" class="btn btn-ghost btn-sm icon-btn">
-          <LogOut :size="18" />
-        </button>
       </div>
-    </nav>
+    </aside>
 
     <main class="content">
       <slot />
@@ -57,104 +70,210 @@ const handleLogout = () => {
 .app-layout {
   display: flex;
   min-height: 100vh;
-  padding: 1rem;
-  gap: 1rem;
+  background-color: var(--bg-main);
 }
 
 .sidebar {
-  width: 260px;
-  height: calc(100vh - 2rem);
+  width: var(--sidebar-width);
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 1rem;
+  padding: 1.5rem;
+  border-radius: 0;
+  border-right: 1px solid var(--border);
+  z-index: 100;
 }
 
-.logo {
+.sidebar-header {
+  padding: 1rem 0.5rem 2.5rem;
+}
+
+.logo-wrapper {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-weight: 800;
-  font-size: 1.25rem;
-  padding: 1rem;
-  margin-bottom: 2rem;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
+  gap: 1rem;
 }
 
-.accent {
+.logo-icon {
   color: var(--accent-primary);
+  filter: drop-shadow(0 0 8px var(--accent-glow));
 }
 
-.nav-links {
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-text .title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+  color: white;
+}
+
+.logo-text .version {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.nav-menu {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
-.nav-item {
+.nav-link {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
   padding: 0.875rem 1rem;
   text-decoration: none;
   color: var(--text-secondary);
   border-radius: 0.75rem;
-  transition: all 0.2s;
-  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.nav-item:hover {
+.nav-link:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
 }
 
-.nav-item.active {
-  background: var(--accent-primary);
+.nav-link .icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s;
+}
+
+.nav-link .label {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  flex: 1;
+}
+
+.nav-link .arrow {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s;
+}
+
+.nav-link:hover .arrow {
+  opacity: 0.5;
+  transform: translateX(0);
+}
+
+.nav-link.active {
+  background: var(--accent-gradient);
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 10px 20px -5px var(--accent-glow);
+}
+
+.nav-link.active .icon-box {
+  transform: scale(1.1);
+}
+
+.nav-link.active .arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 2rem;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.avatar-box {
+  width: 40px;
+  height: 40px;
+  background: var(--accent-gradient);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 .user-info {
-  margin-top: auto;
-  padding: 1rem;
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
 }
 
-.username {
-  font-weight: 600;
-  font-size: 0.9rem;
+.user-info .name {
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.role {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+.user-info .role-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--accent-primary);
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: all 0.2s;
+  border-radius: 0.5rem;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
 }
 
 .content {
   flex: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
+  margin-left: var(--sidebar-width);
+  padding: 2.5rem;
+  max-width: 1400px;
 }
 
 @media (max-width: 1024px) {
-  .app-layout {
-    flex-direction: column;
-  }
   .sidebar {
     width: 100%;
     height: auto;
     position: static;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
   }
-  .nav-links {
+  .content {
+    margin-left: 0;
+  }
+  .nav-menu {
     flex-direction: row;
     overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  .sidebar-footer {
+    display: none;
   }
 }
 </style>

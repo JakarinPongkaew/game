@@ -145,40 +145,53 @@ const deleteWeaponType = async (id) => {
       <h1>จัดการสมาชิกและอาวุธ</h1>
     </header>
 
-    <div v-if="!auth.isAdmin" class="alert warning">
-      คุณไม่มีสิทธิ์ในการแก้ไขข้อมูล (ดูได้อย่างเดียว)
+    <div v-if="loading" class="loader-container">
+      <div class="spinner"></div>
+      <p>กำลังโหลดข้อมูลสมาชิก...</p>
     </div>
 
-    <div class="grid">
-      <!-- Add/Edit Member Section -->
-      <section v-if="auth.isAdmin" class="glass-card form-section" :class="{ 'editing-mode': isEditing }">
-        <div class="section-header">
-          <h3>
-            <UserPlus v-if="!isEditing" :size="18" /> 
-            <Edit2 v-else :size="18" />
-            {{ isEditing ? 'แก้ไขข้อมูลสมาชิก' : 'เพิ่มสมาชิกใหม่' }}
-          </h3>
-          <button v-if="isEditing" @click="cancelEdit" class="btn btn-ghost btn-xs">
-            <X :size="14" /> ยกเลิก
-          </button>
+    <div v-else class="members-grid">
+      <div v-for="member in members" :key="member.id" class="member-card glass-card">
+        <div class="member-header">
+          <div class="member-avatar">{{ member.name.charAt(0) }}</div>
+          <div class="member-title">
+            <h3>{{ member.name }}</h3>
+            <span class="id-badge">ID: #{{ member.id.toString().padStart(3, '0') }}</span>
+          </div>
+          <div v-if="auth.isAdmin" class="actions">
+            <button @click="openEditModal(member)" class="action-btn edit" title="แก้ไข">
+              <Edit2 :size="16" />
+            </button>
+            <button @click="deleteMember(member.id)" class="action-btn delete" title="ลบ">
+              <Trash2 :size="16" />
+            </button>
+          </div>
         </div>
-        
-        <form @submit.prevent="submitMember" class="stacked-form">
-          <div class="form-group">
-            <label>ชื่อ-นามสกุล</label>
-            <input v-model="memberForm.name" type="text" class="input-field" placeholder="ชื่อ-นามสกุล" required>
+
+        <div class="member-body">
+          <div class="section-label">รายการอาวุธที่ครอบครอง</div>
+          <div class="weapons-list">
+            <div v-for="w in member.weapons" :key="w.id" class="weapon-item">
+              <div class="weapon-info">
+                <Sword :size="14" class="icon" />
+                <span class="type">{{ w.weaponType }}</span>
+              </div>
+              <span class="level">LEVEL {{ w.level }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modern Modal -->
+    <Teleport to="body">
+      <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+        <div class="modal-content glass-card animate-scale-up">
+          <div class="modal-header">
+            <h2>{{ editingMember ? 'แก้ไขข้อมูลสมาชิก' : 'เพิ่มสมาชิกใหม่' }}</h2>
+            <button @click="showModal = false" class="close-btn"><X :size="20" /></button>
           </div>
           
-          <div class="weapon-management">
-            <div class="header">
-              <label>อาวุธและเลเวล</label>
-              <button type="button" @click="addWeaponRow" class="btn btn-ghost btn-xs">
-                <Plus :size="14" /> เพิ่มอาวุธ
-              </button>
-            </div>
-            
-            <div v-for="(w, index) in memberForm.weapons" :key="index" class="weapon-row">
-              <select v-model="w.weaponType" class="input-field">
                 <option v-for="type in weaponTypes" :key="type.id" :value="type.name">{{ type.name }}</option>
               </select>
               <input v-model="w.level" type="number" class="input-field lv-input" placeholder="LV" min="1">

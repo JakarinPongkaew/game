@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
-import { Search, CalendarDays, Trash2, AlertTriangle, X } from 'lucide-vue-next'
+import { Search, CalendarDays, Trash2, AlertTriangle, X, Clock } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const date = ref(new Date().toISOString().split('T')[0])
@@ -56,26 +56,27 @@ watch(date, () => {
 </script>
 
 <template>
-  <div class="page-container animate-fade-in">
+  <div class="history-page animate-fade-in">
     <header class="page-header">
-      <div class="header-left">
+      <div class="header-content">
         <h1>ประวัติการเช็คชื่อ</h1>
-        <p class="subtitle">ตรวจสอบและจัดการประวัติการมาทำงานย้อนหลัง</p>
+        <p class="subtitle">ตรวจสอบบันทึกการมาทำงานย้อนหลัง</p>
       </div>
-      <div class="filter-group">
-        <div class="date-selector">
-          <label>เลือกวันที่:</label>
+      
+      <div class="header-actions">
+        <div class="date-picker-group">
+          <label>เลือกวันที่</label>
           <div class="input-wrapper">
-            <CalendarDays :size="18" class="icon" />
+            <CalendarDays :size="18" class="input-icon" />
             <input v-model="date" type="date" class="input-field date-input">
           </div>
         </div>
         <button 
           v-if="auth.isAdmin && attendanceData.length > 0"
           @click="confirmDelete('all')"
-          class="btn btn-danger-outline btn-sm"
+          class="btn btn-ghost delete-all-btn"
         >
-          <Trash2 :size="16" />
+          <Trash2 :size="18" />
           <span>ล้างข้อมูลวันนี้</span>
         </button>
       </div>
@@ -87,11 +88,11 @@ watch(date, () => {
     </div>
 
     <div v-else-if="attendanceData.length === 0" class="empty-state glass-card">
-      <div class="empty-icon-wrapper">
-        <Search :size="48" class="muted" />
+      <div class="empty-icon-box">
+        <Search :size="40" />
       </div>
-      <h3>ไม่พบข้อมูล</h3>
-      <p>ไม่มีบันทึกการเช็คชื่อในวันที่ {{ new Date(date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) }}</p>
+      <h3>ไม่พบข้อมูลการเช็คชื่อ</h3>
+      <p>ไม่มีบันทึกในวันที่ {{ new Date(date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) }}</p>
     </div>
 
     <div v-else class="table-container glass-card">
@@ -101,14 +102,14 @@ watch(date, () => {
             <th>สมาชิก</th>
             <th>อาวุธ & เลเวล</th>
             <th>สถานะ</th>
-            <th>เวลาที่บันทึก</th>
+            <th><div class="flex-center gap-2"><Clock :size="14" /> เวลาที่บันทึก</div></th>
             <th v-if="auth.isAdmin" class="text-center">จัดการ</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in attendanceData" :key="item.id">
             <td>
-              <div class="member-info">
+              <div class="member-cell">
                 <div class="avatar-sm">{{ item.member.name.charAt(0) }}</div>
                 <span class="name">{{ item.member.name }}</span>
               </div>
@@ -124,15 +125,15 @@ watch(date, () => {
             <td>
               <span :class="['status-pill', item.status]">
                 <span class="dot"></span>
-                {{ item.status === 'PRESENT' ? 'มา' : 'ขาด' }}
+                {{ item.status === 'PRESENT' ? 'มาทำงาน' : 'ขาดงาน' }}
               </span>
             </td>
             <td class="timestamp">
               {{ new Date(item.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) }} น.
             </td>
             <td v-if="auth.isAdmin" class="text-center">
-              <button @click="confirmDelete('single', item.id)" class="btn-icon text-danger" title="ลบข้อมูล">
-                <Trash2 :size="18" />
+              <button @click="confirmDelete('single', item.id)" class="action-btn delete" title="ลบข้อมูล">
+                <Trash2 :size="16" />
               </button>
             </td>
           </tr>
@@ -140,29 +141,30 @@ watch(date, () => {
       </table>
     </div>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Modern Delete Modal -->
     <Teleport to="body">
       <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
         <div class="modal-content glass-card animate-scale-up">
-          <div class="modal-header">
-            <div class="warning-icon">
+          <div class="modal-header-danger">
+            <div class="danger-icon-box">
               <AlertTriangle :size="32" />
             </div>
             <h2>ยืนยันการลบ</h2>
-            <button @click="showDeleteModal = false" class="close-btn"><X :size="20" /></button>
           </div>
+          
           <div class="modal-body">
             <p v-if="deleteTarget?.type === 'all'">
-              คุณแน่ใจหรือไม่ว่าต้องการ <strong>ลบข้อมูลทั้งหมด</strong> ของวันที่ {{ date }}?
+              คุณแน่ใจหรือไม่ว่าต้องการ <strong>ล้างข้อมูลทั้งหมด</strong> ของวันที่ {{ date }}?
             </p>
             <p v-else>
-              คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลประวัติแถวนี้?
+              คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลประวัตินี้?
             </p>
-            <p class="text-secondary text-sm">การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
+            <p class="warning-text">การดำเนินการนี้ไม่สามารถเรียกคืนข้อมูลได้</p>
           </div>
-          <div class="modal-footer">
+
+          <div class="modal-footer-grid">
             <button @click="showDeleteModal = false" class="btn btn-ghost">ยกเลิก</button>
-            <button @click="handleDelete" class="btn btn-danger">ยืนยันการลบ</button>
+            <button @click="handleDelete" class="btn btn-primary danger-btn">ยืนยันการลบ</button>
           </div>
         </div>
       </div>
@@ -171,55 +173,70 @@ watch(date, () => {
 </template>
 
 <style scoped>
-.page-container { padding: 2rem 0; }
+.history-page { padding-bottom: 2rem; }
 
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2.5rem;
+  align-items: flex-end;
+  margin-bottom: 3rem;
 }
 
-.header-left h1 { font-size: 2.25rem; font-family: 'Outfit', sans-serif; margin-bottom: 0.5rem; }
+.header-content h1 { font-size: 2.25rem; margin-bottom: 0.5rem; }
 .subtitle { color: var(--text-secondary); font-size: 0.95rem; }
 
-.filter-group { display: flex; align-items: flex-end; gap: 1rem; }
-.date-selector { display: flex; flex-direction: column; gap: 0.5rem; }
-.date-selector label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.header-actions { display: flex; align-items: flex-end; gap: 1.5rem; }
 
-.input-wrapper { position: relative; width: 180px; }
-.input-wrapper .icon {
+.date-picker-group { display: flex; flex-direction: column; gap: 0.625rem; }
+.date-picker-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input-wrapper { position: relative; }
+.input-icon {
   position: absolute;
-  left: 0.875rem;
+  left: 1rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--accent-primary);
   pointer-events: none;
 }
 
-.date-input { 
-  padding-left: 2.75rem; 
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  height: 42px;
+.date-input {
+  padding-left: 2.75rem !important;
+  width: 200px;
 }
 
-/* Table Styles */
-.member-info { display: flex; align-items: center; gap: 0.75rem; }
+.delete-all-btn {
+  height: 48px;
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.delete-all-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--danger);
+}
+
+/* Table Design */
+.member-cell { display: flex; align-items: center; gap: 0.75rem; }
 .avatar-sm {
   width: 32px;
   height: 32px;
-  background: var(--accent-primary);
-  color: white;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.8rem;
+  color: var(--accent-primary);
 }
-
-.name { font-weight: 600; color: var(--text-primary); }
 
 .status-pill {
   display: inline-flex;
@@ -227,18 +244,32 @@ watch(date, () => {
   gap: 0.5rem;
   padding: 0.375rem 0.875rem;
   border-radius: 2rem;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
 .status-pill.PRESENT { background: rgba(16, 185, 129, 0.1); color: var(--success); }
 .status-pill.ABSENT { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+.status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
-.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.timestamp { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
 
-.timestamp { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; }
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
 
-.text-center { text-align: center; }
+.action-btn.delete:hover {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
 
 /* Empty State */
 .empty-state {
@@ -250,72 +281,34 @@ watch(date, () => {
   text-align: center;
 }
 
-.empty-icon-wrapper {
+.empty-icon-box {
   width: 80px;
   height: 80px;
-  background: var(--bg-secondary);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1.5rem;
+  color: var(--text-muted);
 }
 
-.empty-state h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-.empty-state p { color: var(--text-secondary); }
-
-/* Loader */
-.loader-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 5rem;
-  gap: 1rem;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(59, 130, 246, 0.1);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* Modal Styles */
+/* Modal Enhancements */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1.5rem;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 1.5rem;
 }
 
-.modal-content {
-  width: 100%;
-  max-width: 450px;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
+.modal-content { width: 100%; max-width: 420px; overflow: hidden; }
 
-.modal-header {
-  padding: 2rem 2rem 1rem;
+.modal-header-danger {
+  padding: 2.5rem 2rem 1.5rem;
   text-align: center;
-  position: relative;
 }
 
-.warning-icon {
+.danger-icon-box {
   width: 64px;
   height: 64px;
   background: rgba(239, 68, 68, 0.1);
@@ -327,19 +320,7 @@ watch(date, () => {
   margin: 0 auto 1.5rem;
 }
 
-.close-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.5rem;
-}
-
 .modal-body { padding: 0 2rem 2rem; text-align: center; }
-.modal-body p { margin-bottom: 0.5rem; }
 .text-sm { font-size: 0.85rem; }
 
 .modal-footer {
