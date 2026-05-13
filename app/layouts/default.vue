@@ -53,10 +53,11 @@ const handleLogout = () => {
             <p class="name">{{ auth.user?.username }}</p>
             <p class="role-badge">{{ auth.user?.role }}</p>
           </div>
-          <button @click="handleLogout" class="logout-btn" title="ออกจากระบบ">
-            <LogOut :size="18" />
-          </button>
         </div>
+        <button @click="handleLogout" class="btn btn-ghost logout-full-btn">
+          <LogOut :size="18" />
+          <span>ออกจากระบบ</span>
+        </button>
       </div>
     </aside>
 
